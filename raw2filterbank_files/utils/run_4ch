@@ -1,0 +1,1 @@
+python proc_4ch.py -i /data/psr/16a232/s01-B0833-45    -o /data/work/16a232/raw/s01-B0833-45    --source B0833-45  --tsamp 512.0   --tag r1 >& s01.log &

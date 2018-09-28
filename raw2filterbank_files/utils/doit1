@@ -1,0 +1,4 @@
+python ~/src/py/filterbank_class.py "r1-2016-04-01-08:55:44_S-LCP.fil.ext" "r1-2016-04-01-08:55:44_S-LCP.corr" 0 0 "05:31:47.0" "+33:05:46.5" >& log.sl &
+python ~/src/py/filterbank_class.py "r1-2016-04-01-08:55:44_S-RCP.fil.ext" "r1-2016-04-01-08:55:44_S-RCP.corr" 0 0 "05:31:47.0" "+33:05:46.5" >& log.sr &
+python ~/src/py/filterbank_class.py "r1-2016-04-01-08:55:44_X-LCP.fil.ext" "r1-2016-04-01-08:55:44_X-LCP.corr" 0 0 "05:31:47.0" "+33:05:46.5" >& log.xl &
+python ~/src/py/filterbank_class.py "r1-2016-04-01-08:55:44_X-RCP.fil.ext" "r1-2016-04-01-08:55:44_X-RCP.corr" 0 0 "05:31:47.0" "+33:05:46.5" >& log.xr &
