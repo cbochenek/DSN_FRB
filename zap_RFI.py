@@ -15,11 +15,12 @@ parser = argparse.ArgumentParser(description='Tell me what to do.')
 parser.add_argument('-f', action = 'append',help='Select the epoch to process')
 parser.add_argument('-p', action = 'append',help='Choose the channels that contain 70m data')
 parser.add_argument('-s', action = 'append',help='Select the scan number')
+parser.add_argument('-d', action = 'append',help='Choose the base directory (e.g. /data3/cbochenek)')
 args = parser.parse_args()
 
 files = []
 for arg in args.p:
-	files.append(FilReader("/data3/cbochenek/%s/mdscc_ch%s_S1_scan%s_60hzfilter.fil" %(args.f[0],arg,args.s[0])))
+	files.append(FilReader("%s/%s/mdscc_ch%s_S1_scan%s_60hzfilter.fil" %(args.d[0],args.f[0],arg,args.s[0])))
 nsamples = files[0].header['nsamples']
 GULP = int(250000)
 NCHANS = files[0].header['nchans']
@@ -191,7 +192,7 @@ def write_data(i,data_out,bp_bins,nsamples,GULP,args):
         else:
                 out_data = data_out[:,bp_bins/2:-bp_bins/2]
         outfile = sp.Filterbank.FilterbankBlock(out_data,files[0].header)
-        outfile.toFile("/data3/cbochenek/%s/mdscc_70m_S1_scan%s_60hzfilter_cleaned_%s.fil" %(args.f[0], args.s[0],i))
+        outfile.toFile("%s/%s/mdscc_70m_S1_scan%s_60hzfilter_cleaned_%s.fil" %(args.d[0],args.f[0], args.s[0],i))
         return None
 
 for i in range(nsamples/GULP+1):

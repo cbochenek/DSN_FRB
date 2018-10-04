@@ -6,9 +6,9 @@ import multiprocessing as mp
 import GPUtil
 import os
 
-def unpack(fname):
-        os.system("mkdir /data3/cbochenek/%s" %fname)
-        cmd = "python /home/cbochenek/raw2filterbank_files/mdscc_raw2filterbank.py -c /home/cbochenek/raw2filterbank_files/mdscc_rawparam.py -i /data3/majid/mars_data/%s/ -o /data3/cbochenek/%s/" %(fname,fname)
+def unpack(fname,input_dir,output_dir):
+        os.system("mkdir %s/%s" %(output_dir,fname)
+        cmd = "python /home/cbochenek/raw2filterbank_files/mdscc_raw2filterbank.py -c /home/cbochenek/raw2filterbank_files/mdscc_rawparam.py -i %s/%s/ -o %s/%s/" %(input_dir,fname,output_dir,fname)
         out = subprocess.Popen(cmd, shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         donelist = open("/home/cbochenek/unpacked.txt",'a')
         donelist.write("%s\n" %fname)
@@ -32,7 +32,7 @@ def intersect(intervals):
                 merged.append(higher)
     return np.array(merged)
 
-def extract_70m(directory, pols=[3,4]):
+def extract_70m(directory, pols=[3,4],output_dir):
 	print directory, pols
         scan_table = np.genfromtxt("scan.table.all",skip_header=1,dtype = int)
         mdscc_table = np.genfromtxt("mdscc.mars.date",skip_header=1,dtype=str)
@@ -78,23 +78,23 @@ def extract_70m(directory, pols=[3,4]):
                 start_dt  = (start - scan_start)
                 read_time = (end-start)
                 for pol in pols:
-                        files = FilReader("/data3/cbochenek/%s/mdscc_ch%s_S1.fil" %(directory,pol))
+                        files = FilReader("%s/%s/mdscc_ch%s_S1.fil" %(output_dir,directory,pol))
                         tsamp = files.header['tsamp']
                         start_samp = (start_dt.seconds/tsamp)+1
                         read_samps = read_time.seconds/tsamp
-                        out = subprocess.Popen("extract /data3/cbochenek/%s/mdscc_ch%s_S1.fil %s %s > /data3/cbochenek/%s/mdscc_ch%s_S1_70m_scan%s.fil" %(directory,pol,start_samp,read_samps,directory,pol,i), shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+                        out = subprocess.Popen("extract %s/%s/mdscc_ch%s_S1.fil %s %s > %s/%s/mdscc_ch%s_S1_70m_scan%s.fil" %(output_dir,directory,pol,start_samp,read_samps,output_dir,directory,pol,i), shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
                         print out.communicate()
         return directory
 
-def run_filter60hz(fname,pols = [3,4]):
+def run_filter60hz(fname,pols = [3,4],output_dir):
         for pol in pols:
-                cmd = "ls /data3/cbochenek/%s/mdscc_ch%s_S1_70m_scan* | wc -l" %(fname, pol)
+                cmd = "ls %s/%s/mdscc_ch%s_S1_70m_scan* | wc -l" %(output_dir,name, pol)
                 out = subprocess.Popen(cmd, shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
                 loops = int(out.communicate()[0])
                 for i in range(loops):
                         print "Filtering %s poln %s loop %s out of %s" %(fname, pol,i, loops)
 			#if pol == 3:
-                        cmd = "python /home/cbochenek/m_fb_60hzfilter.py --inputFilename /data3/cbochenek/%s/mdscc_ch%s_S1_70m_scan%s.fil --outputFilename /data3/cbochenek/%s/mdscc_ch%s_S1_scan%s_60hzfilter.fil --maxHarmonicFrequency 180.0 --outputDir /data3/cbochenek/%s/ --clean True" %(fname,pol,i,fname,pol,i,fname)
+                        cmd = "python /home/cbochenek/m_fb_60hzfilter.py --inputFilename %s/%s/mdscc_ch%s_S1_70m_scan%s.fil --outputFilename %s/%s/mdscc_ch%s_S1_scan%s_60hzfilter.fil --maxHarmonicFrequency 180.0 --outputDir %s/%s/ --clean True" %(output_dir,fname,pol,i,output_dir,fname,pol,i,output_dir,fname)
 			print cmd
 			#if pol == 4:
                         #        cmd = "python /home/cbochenek/m_fb_60hzfilter.py --inputFilename /data/cbochenek/%s/mdscc_ch%s_S1_70m_scan%s.fil --outputFilename /data3/cbochenek/%s/mdscc_ch%s_S1_scan%s_60hzfilter.fil --maxHarmonicFrequency 180.0 --outputDir /data3/cbochenek/%s/ --clean True" %(fname,pol,i,fname,pol,i,fname)
@@ -106,14 +106,14 @@ def run_filter60hz(fname,pols = [3,4]):
                 donelist.close()
         return (fname, pols)
 
-def run_zap(fname, chans = [3,4]):
-        cmd = "ls /data3/cbochenek/%s/mdscc_ch%s_S1_scan* | wc -l" %(fname, chans[0])
+def run_zap(fname, chans = [3,4],output_dir):
+        cmd = "ls %s/%s/mdscc_ch%s_S1_scan* | wc -l" %(output_dir,fname, chans[0])
         out = subprocess.Popen(cmd, shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         loops = int(out.communicate()[0])
         print loops
         print "Filtering RFI for %s on channels %s for %s scans" %(fname,chans,loops)
         for i in range(loops):
-                cmd = "python /home/cbochenek/zap_RFI.py -f %s -s %s " %(fname,i)
+                cmd = "python /home/cbochenek/zap_RFI.py -f %s -s %s -d %s" %(fname,i,output_dir)
                 for chan in chans:
                         cmd += "-p %s " %chan
                 out = subprocess.Popen(cmd, shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -136,8 +136,8 @@ def get_gpu():
                 gpu = 0
         return gpu
 
-def run_heimdall(fname):
-        cmd = "ls /data3/cbochenek/%s/mdscc_70m_S1_scan*" %fname
+def run_heimdall(fname,output_dir):
+        cmd = "ls %s/%s/mdscc_70m_S1_scan*" %(output_dir,fname)
         out = subprocess.Popen(cmd, shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         msg = out.communicate()
         search_files = msg[0].split('\n')[:-1]
@@ -154,15 +154,17 @@ def run_heimdall(fname):
         return fname
 
 def run_pipeline(fname, pols = [3,4]):
-	#unpacked = unpack(fname)
-	#extracted = extract_70m(fname)
-	filtered = run_filter60hz(fname, pols)
-	zapped = run_zap(fname, pols)
-	searched = run_heimdall(fname)
+	#unpacked = unpack(fname,input_dir,output_dir)
+	#extracted = extract_70m(fname,output_dir)
+	filtered = run_filter60hz(fname, pols,output_dir)
+	zapped = run_zap(fname, pols,output_dir)
+	searched = run_heimdall(fname,output_dir)
 	return fname
 
 pool = mp.Pool(processes=16)
 tracks = ["17m100","17m101","17m103","17m105","17m107","17m118","17m122","17m146","17m147"]
+input_dir = '/data3/majid/mars_data/'
+output_dir = '/data3/cbochenek/'
 #tracks = ["17m152","17m154","17m157","17m167","17m175","17m181","17m182","17m183","17m195","17m196","17m345"]
 #tracks = ["17m195"]#,"17m195"]#["17m181","17m182"]#,"17m183","17m195","17m196"]
 results = [pool.map(run_pipeline, [tracks[i] for i in range(len(tracks))],)]
